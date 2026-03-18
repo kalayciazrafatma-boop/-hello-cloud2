@@ -2,9 +2,10 @@ from flask import Flask, render_template_string, request
 import os
 import psycopg2
 
-app= Flask(__name__)
+app = Flask(__name__)
 
-DATABASE_URL = os-getenv("DARABASE_URL", " postgresql://azra:BZVe05jiQFq0K9Ywgd7YiX4hLJyHwJhn@dpg-d6t8r7vpm1nc739dp90g-a.oregon-postgres.render.com/hello_cloud2_db_81ex")
+# os-getenv yerine os.getenv kullanıldı
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://azra:BZVe05jiQFq0K9Ywgd7YiX4hLJyHwJhn@dpg-d6t8r7vpm1nc739dp90g-a.oregon-postgres.render.com/hello_cloud2_db_81ex")
 
 HTML = """
 <!doctype html>
@@ -19,15 +20,15 @@ HTML = """
         button {padding: 10px 15px; background: #4CAF50; color: white; border: none; border-radius: 6px; cursor: pointer; }
         ul { list-style: none; padding: 0; }
         li { background: white; margin: 5px auto; width: 200px; padding: 8px; border-radius: 5px; }
-   </style>
+    </style>
 </head>
 <body>
      <h1>Buluttan Selam!</h1>
      <p>Adını yaz, selamını bırak </p>
-     <from method="POST">
-         <input type="text" name="isim" placeholder="Adını yaz" reguired>
+     <form method="POST">
+         <input type="text" name="isim" placeholder="Adını yaz" required>
          <button type="submit">Gönder</button>
-    </from>
+    </form>
     <h3>Ziyaretçiler:</h3>
     <ul>
         {% for ad in isimler %}
@@ -39,29 +40,33 @@ HTML = """
 """
 
 def connect_db():
-  conn = psycopg2.connect(DATABASE_URL)
-  return conn
+    conn = psycopg2.connect(DATABASE_URL)
+    return conn
 
-  @app.route("/", methods=["GET", "POST"])
-  def index():
+@app.route("/", methods=["GET", "POST"])
+def index():
     conn = connect_db()
     cur = conn.cursor()
+    
+    # Tabloyu oluştur
     cur.execute("CREATE TABLE IF NOT EXISTS ziyaretciler (id SERIAL PRIMARY KEY, isim TEXT)")
+    conn.commit()
 
-  if request.method == "POST":
-      isim = request.form.get("isim")
-      if isim:
-        cur.execute("INSERT INTO ziyaretciler (isim) VALUES (%s)", (isim,))
-        conn.commit()
+    if request.method == "POST":
+        isim = request.form.get("isim")
+        if isim:
+            cur.execute("INSERT INTO ziyaretciler (isim) VALUES (%s)", (isim,))
+            conn.commit()
 
- cur.execute("SELECT isim FROM ziyaretciler ORDER BY id DESC LIMIT 10")
-isimler = [row[0] for row in cur.fetchall()]
+    # Verileri çek - Bu satırların fonksiyonun içinde (hizalı) olması şart!
+    cur.execute("SELECT isim FROM ziyaretciler ORDER BY id DESC LIMIT 10")
+    isimler = [row[0] for row in cur.fetchall()]
 
- cur.close()
- conn.close()
- return render_template_string(HTML, isimler=isimler)
+    cur.close()
+    conn.close()
+    
+    return render_template_string(HTML, isimler=isimler)
      
-if __name__ == "_main_":
-  app.run(host="0.0.0.0",port=5000)
-  
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
   
