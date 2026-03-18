@@ -1,4 +1,4 @@
-from flask import Flask, render_template_string, reguest
+from flask import Flask, render_template_string, request
 import os
 import psycopg2
 
@@ -49,7 +49,7 @@ def connect_db():
     cur.execute("CREATE TABLE IF NOT EXISTS ziyaretciler (id SERIAL PRIMARY KEY, isim TEXT)")
 
   if request.method == "POST":
-      isim = reguest.form.get("isim")
+      isim = request.form.get("isim")
       if isim:
         cur.execute("INSERT INTO ziyaretciler (isim) VALUES (%s)", (isim,))
         conn.commit()
@@ -61,7 +61,7 @@ isimler = [row[0] for row in cur.fetchall()]
  conn.close()
  return render_template_string(HTML, isimler=isimler)
      
-if __name__ == "_name_":
+if __name__ == "_main_":
   app.run(host="0.0.0.0",port=5000)
   
   
